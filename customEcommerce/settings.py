@@ -137,5 +137,8 @@ CKEDITOR_CONFIGS = {
         'height': 300,
         'width': 'auto',
         'extraPlugins': ','.join(['uploadimage', 'image2']),  # For image upload
+        'allowedContent': True,  # Allow all content, including IDs and classes
+        'extraAllowedContent': '*[id](*)',  # Allow IDs and classes for all tags
+        'removePlugins': 'stylesheetparser',  # Prevent CKEditor from removing inline styles
     },
 }
