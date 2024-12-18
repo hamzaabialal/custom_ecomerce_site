@@ -3,15 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Commerce Landing Page</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>User Template</title>
+    <style>
+        /* General Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header .logo h1 {
+            font-size: 2rem;
+        }
+
+        header nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1rem;
+        }
+
+        header nav ul li a {
+            color: #fff;
+            font-size: 1.1rem;
+            padding: 0.5rem;
+        }
+
+        header nav ul li a:hover {
+            background-color: #555;
+            border-radius: 5px;
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 3rem 1rem;
+            text-align: center;
+        }
+
+        .home {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .products {
+            background-color: #fff;
+        }
+
+        .product-grid {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .product-card {
+            background-color: #f9f9f9;
+            padding: 1rem;
+            border-radius: 8px;
+            width: 250px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .product-card h3 {
+            margin-top: 1rem;
+        }
+
+        .product-card p {
+            margin: 0.5rem 0;
+            color: #555;
+        }
+
+        .add-to-cart {
+            background-color: #4CAF50;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .add-to-cart:hover {
+            background-color: #45a049;
+        }
+
+        /* Contact Section Styles */
+        .contact form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .contact input,
+        .contact textarea {
+            padding: 0.8rem;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .contact button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .contact button:hover {
+            background-color: #45a049;
+        }
+
+        /* Footer Styles */
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            margin-top: 2rem;
+        }
+    </style>
 </head>
 <body>
-    <!-- Header Section -->
     <header id="header">
         <div class="logo">
             <h1>ShopEase</h1>
         </div>
+
         <nav>
             <ul>
                 <li><a href="#home">Home</a></li>
@@ -22,45 +170,63 @@
     </header>
 
     <!-- Home Section -->
-    <section id="home" class="section home">
+    <section class="section home" id="home">
         <h2>Welcome to ShopEase</h2>
         <p>Your one-stop shop for amazing products.</p>
-        <a href="#products" class="btn">Shop Now</a>
+        <a class="btn" href="#products">Shop Now</a>
     </section>
 
     <!-- Products Section -->
-    <section id="products" class="section products">
+    <section class="section products" id="products">
         <h2>Our Products</h2>
+
         <div class="product-grid">
             <div class="product-card">
-                <img src="https://via.placeholder.com/200" alt="Product 1">
+                <img alt="Product 1" src="https://via.placeholder.com/200" />
                 <h3>Product 1</h3>
                 <p>$25.00</p>
-                <button class="add-to-cart">Add to Cart</button>
+                <button class="add-to-cart" data-product-name="Product 1" data-product-price="25.00">Add to Cart</button>
             </div>
+
             <div class="product-card">
-                <img src="https://via.placeholder.com/200" alt="Product 2">
+                <img alt="Product 2" src="https://via.placeholder.com/200" />
                 <h3>Product 2</h3>
                 <p>$30.00</p>
-                <button class="add-to-cart">Add to Cart</button>
+                <button class="add-to-cart" data-product-name="Product 2" data-product-price="30.00">Add to Cart</button>
             </div>
+
             <div class="product-card">
-                <img src="https://via.placeholder.com/200" alt="Product 3">
+                <img alt="Product 3" src="https://via.placeholder.com/200" />
                 <h3>Product 3</h3>
                 <p>$45.00</p>
-                <button class="add-to-cart">Add to Cart</button>
+                <button class="add-to-cart" data-product-name="Product 3" data-product-price="45.00">Add to Cart</button>
+            </div>
+
+            <div class="product-card">
+                <img alt="Product 4" src="https://via.placeholder.com/200" />
+                <h3>Product 4</h3>
+                <p>$50.00</p>
+                <button class="add-to-cart" data-product-name="Product 4" data-product-price="50.00">Add to Cart</button>
+            </div>
+
+            <div class="product-card">
+                <img alt="Product 5" src="https://via.placeholder.com/200" />
+                <h3>Product 5</h3>
+                <p>$56.00</p>
+                <button class="add-to-cart" data-product-name="Product 5" data-product-price="56.00">Add to Cart</button>
             </div>
         </div>
     </section>
 
     <!-- Contact Section -->
-    <section id="contact" class="section contact">
+    <section class="section contact" id="contact">
         <h2>Contact Us</h2>
         <p>If you have any questions, feel free to reach out!</p>
+
         <form id="contact-form">
-            <input type="text" placeholder="Your Name" required>
-            <input type="email" placeholder="Your Email" required>
-            <textarea placeholder="Your Message" required></textarea>
+            <input placeholder="Your Name" required="" type="text" />
+            <input placeholder="Your Email" required="" type="email" />
+            <textarea placeholder="Your Message" required=""></textarea>
             <button type="submit">Send Message</button>
         </form>
     </section>
@@ -69,7 +235,5 @@
     <footer>
         <p>&copy; 2024 ShopEase. All rights reserved.</p>
     </footer>
-
-    <script src="script.js"></script>
 </body>
 </html>

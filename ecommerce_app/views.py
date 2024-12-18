@@ -55,6 +55,9 @@ class UploadTemplateView(LoginRequiredMixin, FormView):
             # Log error or notify user
             return HttpResponse(f"Error reading file: {str(e)}", status=400)
 
+from django.http import HttpResponse
+from django.views.generic.detail import DetailView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 class ViewTemplateView(LoginRequiredMixin, DetailView):
     model = UserTemplate
@@ -62,23 +65,92 @@ class ViewTemplateView(LoginRequiredMixin, DetailView):
     template_name = 'view_template.html'
 
     def get_queryset(self):
-        # Restrict access to templates owned by the logged-in user
+        """
+        Restrict access to templates owned by the logged-in user.
+        """
         return UserTemplate.objects.filter(user=self.request.user)
 
     def render_to_response(self, context, **response_kwargs):
+        """
+        Render the user template with embedded CSS and JavaScript.
+        Add custom JavaScript for Add to Cart functionality.
+        """
         user_template = context['user_template']
 
-        # Get the content from the database
+        # Retrieve the content from the database
         html_content = user_template.html_content
         css_content = user_template.css_content
         js_content = user_template.js_content
 
-        # Inject CSS and JS content into the HTML
-        html_content = f"""
-        <html>
+        # Construct the complete HTML with embedded CSS and JavaScript
+        full_html_content = f"""
+        <!DOCTYPE html>
+        <html lang="en">
         <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>User Template</title>
             <style>{css_content}</style>
-            <script>{js_content}</script>
+            <script>
+                {js_content}
+
+                // Custom JavaScript for Add to Cart functionality
+                document.addEventListener('DOMContentLoaded', function() {{
+                    console.log('Page loaded, JavaScript initialized.');
+
+                    const addToCartButtons = document.querySelectorAll('.add-to-cart');
+                    console.log('Add to Cart buttons found:', addToCartButtons.length);
+
+                    addToCartButtons.forEach(button => {{
+                        button.addEventListener('click', function() {{
+                            const productName = this.getAttribute('data-product-name');
+                            const productPrice = this.getAttribute('data-product-price');
+                            console.log('Adding to cart:', productName, productPrice);
+
+                            // Make an AJAX POST request to add the product to the cart
+                            fetch('/add-to-cart/', {{
+                                method: 'POST',
+                                headers: {{
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCookie('csrftoken'),
+                                }},
+                                body: JSON.stringify({{
+                                    product_name: productName,
+                                    product_price: productPrice,
+                                    quantity: 1
+                                }})
+                            }})
+                            .then(response => response.json())
+                            .then(data => {{
+                                if (data.message) {{
+                                    alert(data.message); // Success message
+                                }} else if (data.error) {{
+                                    alert('Error: ' + data.error); // Error message
+                                }}
+                            }})
+                            .catch(error => {{
+                                console.error('Error:', error);
+                            }});
+                        }});
+                    }});
+
+                    // Helper function to get CSRF token
+                    function getCookie(name) {{
+                        let cookieValue = null;
+                        if (document.cookie && document.cookie !== '') {{
+                            const cookies = document.cookie.split(';');
+                            for (let i = 0; i < cookies.length; i++) {{
+                                const cookie = cookies[i].trim();
+                                if (cookie.substring(0, name.length + 1) === (name + '=')) {{
+                                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                    break;
+                                }}
+                            }}
+                        }}
+                        return cookieValue;
+                    }}
+                }});
+            </script>
         </head>
         <body>
             {html_content}
@@ -86,4 +158,44 @@ class ViewTemplateView(LoginRequiredMixin, DetailView):
         </html>
         """
 
-        return HttpResponse(html_content)
+        return HttpResponse(full_html_content)
+
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+from .models import Cart
+
+@csrf_exempt
+def add_to_cart(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            product_name = data.get("product_name")
+            product_price = data.get("product_price")
+            quantity = data.get("quantity", 1)
+
+            # Ensure the user is authenticated
+            if not request.user.is_authenticated:
+                return JsonResponse({"error": "User not authenticated."}, status=403)
+
+            cart_item, created = Cart.objects.get_or_create(
+                user=request.user,
+                product_name=product_name,
+                defaults={"product_price": product_price, "quantity": quantity},
+            )
+
+            if not created:
+                cart_item.quantity += quantity
+                cart_item.save()
+
+            return JsonResponse({"message": "Product added to cart successfully!"}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    return JsonResponse({"error": "Invalid request method."}, status=405)
+
