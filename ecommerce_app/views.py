@@ -23,24 +23,35 @@ def read_file(file):
     except (UnicodeDecodeError, TypeError):
         # If the detected encoding doesn't work, fallback to a different encoding
         return raw_data.decode('ISO-8859-1', errors='ignore')
+import zipfile
+import os
+from django.core.files.storage import FileSystemStorage
 
+import zipfile
+import os
+from django.core.files.storage import FileSystemStorage
+from django.shortcuts import redirect
+from django.http import HttpResponse
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic.edit import FormView
+from .models import UserTemplate
 
 class UploadTemplateView(LoginRequiredMixin, FormView):
     template_name = 'upload_template.html'
     form_class = UserTemplateForm
 
     def form_valid(self, form):
-        # Read file content
         html_file = self.request.FILES['html_file']
         css_file = self.request.FILES['css_file']
         js_file = self.request.FILES['js_file']
+        images_zip = form.cleaned_data.get('images_zip')
 
         try:
             html_content = read_file(html_file)
             css_content = read_file(css_file)
             js_content = read_file(js_file)
 
-            # Save to the database
+            # Save files to the database
             user_template = UserTemplate.objects.create(
                 user=self.request.user,
                 html_content=html_content,
@@ -48,12 +59,26 @@ class UploadTemplateView(LoginRequiredMixin, FormView):
                 js_content=js_content,
             )
 
-            # Redirect to the template view with pk
+            # Handle image upload if ZIP file is provided
+            if images_zip:
+                # Create a directory to store images
+                image_dir = os.path.join('media', 'user_images', str(user_template.id))
+                os.makedirs(image_dir, exist_ok=True)
+
+                # Extract images from ZIP file
+                with zipfile.ZipFile(images_zip, 'r') as zip_ref:
+                    zip_ref.extractall(image_dir)
+
+                # Store the image directory in the user template model if needed
+                user_template.image_dir = image_dir
+                user_template.save()
+
             return redirect('view_template', pk=user_template.id)
 
         except UnicodeDecodeError as e:
-            # Log error or notify user
             return HttpResponse(f"Error reading file: {str(e)}", status=400)
+
+
 
 from django.http import HttpResponse
 from django.views.generic.detail import DetailView
@@ -64,23 +89,23 @@ class ViewTemplateView(LoginRequiredMixin, DetailView):
     context_object_name = 'user_template'
     template_name = 'view_template.html'
 
-    def get_queryset(self):
-        """
-        Restrict access to templates owned by the logged-in user.
-        """
-        return UserTemplate.objects.filter(user=self.request.user)
-
     def render_to_response(self, context, **response_kwargs):
-        """
-        Render the user template with embedded CSS and JavaScript.
-        Add custom JavaScript for Add to Cart functionality.
-        """
         user_template = context['user_template']
 
         # Retrieve the content from the database
         html_content = user_template.html_content
         css_content = user_template.css_content
         js_content = user_template.js_content
+
+        # Modify HTML content to use correct image paths
+        image_dir = user_template.image_dir
+        if image_dir:
+            # Replace relative image paths in the HTML content to use the correct media path
+            html_content = html_content.replace('src="/', f'src="/media/user_images/{user_template.id}/images/')
+
+            # For absolute or other relative paths, replace them accordingly
+            # This will avoid appending `/media/user_images/{user_template.id}/` twice
+
 
         # Construct the complete HTML with embedded CSS and JavaScript
         full_html_content = f"""
@@ -93,63 +118,6 @@ class ViewTemplateView(LoginRequiredMixin, DetailView):
             <style>{css_content}</style>
             <script>
                 {js_content}
-
-                // Custom JavaScript for Add to Cart functionality
-                document.addEventListener('DOMContentLoaded', function() {{
-                    console.log('Page loaded, JavaScript initialized.');
-
-                    const addToCartButtons = document.querySelectorAll('.add-to-cart');
-                    console.log('Add to Cart buttons found:', addToCartButtons.length);
-
-                    addToCartButtons.forEach(button => {{
-                        button.addEventListener('click', function() {{
-                            const productName = this.getAttribute('data-product-name');
-                            const productPrice = this.getAttribute('data-product-price');
-                            console.log('Adding to cart:', productName, productPrice);
-
-                            // Make an AJAX POST request to add the product to the cart
-                            fetch('/add-to-cart/', {{
-                                method: 'POST',
-                                headers: {{
-                                    'Content-Type': 'application/json',
-                                    'X-CSRFToken': getCookie('csrftoken'),
-                                }},
-                                body: JSON.stringify({{
-                                    product_name: productName,
-                                    product_price: productPrice,
-                                    quantity: 1
-                                }})
-                            }})
-                            .then(response => response.json())
-                            .then(data => {{
-                                if (data.message) {{
-                                    alert(data.message); // Success message
-                                }} else if (data.error) {{
-                                    alert('Error: ' + data.error); // Error message
-                                }}
-                            }})
-                            .catch(error => {{
-                                console.error('Error:', error);
-                            }});
-                        }});
-                    }});
-
-                    // Helper function to get CSRF token
-                    function getCookie(name) {{
-                        let cookieValue = null;
-                        if (document.cookie && document.cookie !== '') {{
-                            const cookies = document.cookie.split(';');
-                            for (let i = 0; i < cookies.length; i++) {{
-                                const cookie = cookies[i].trim();
-                                if (cookie.substring(0, name.length + 1) === (name + '=')) {{
-                                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                                    break;
-                                }}
-                            }}
-                        }}
-                        return cookieValue;
-                    }}
-                }});
             </script>
         </head>
         <body>

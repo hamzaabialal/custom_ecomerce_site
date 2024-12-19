@@ -9,6 +9,7 @@ class UserTemplate(models.Model):
     css_content = models.TextField()
     js_content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    image_dir = models.CharField(max_length=255, blank=True, null=True)  # New field to store image directory
 
     def __str__(self):
         return f"Template by {self.user.username} on {self.created_at}"

@@ -1,9 +1,9 @@
 from django import forms
-
 class UserTemplateForm(forms.Form):
     html_file = forms.FileField(required=True, label="HTML File")
     css_file = forms.FileField(required=True, label="CSS File")
     js_file = forms.FileField(required=True, label="JavaScript File")
+    images_zip = forms.FileField(required=False, label="Images (ZIP)")
 
     def clean_html_file(self):
         file = self.cleaned_data['html_file']
